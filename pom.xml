@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- The Basics -->
+  <groupId>sybilant</groupId>
+  <artifactId>sybilant</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+  <dependencies>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.6.4</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.0.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <!-- Build Settings -->
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.5.1</version>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <!-- More Project Information -->
+  <name>Sybilant</name>
+  <description>
+    A dynamic Lisp that takes inspiration from Scheme and Clojure.
+  </description>
+  <url>http://www.sybilant.org</url>
+  <inceptionYear>2012</inceptionYear>
+  <licenses>
+    <license>
+      <name>The Mozilla Public License, Version 2.0</name>
+      <url>http://mozilla.org/MPL/2.0/</url>
+      <distribution>repo</distribution>
+      <comments>A simple "file-level" copyleft license</comments>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>pjstadig</id>
+      <name>Paul Stadig</name>
+      <email>paul@sybilant.org</email>
+      <url>http://paul.stadig.name/</url>
+      <organization>Sybilant</organization>
+      <organizationUrl>http://www.sybilant.org/</organizationUrl>
+      <roles>
+        <role>architect</role>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+  </developers>
+
+  <!-- Environment Settings -->
+  <scm>
+    <connection>
+      scm:git:ssh://github.com/sybilant/sybilant/
+    </connection>
+    <tag>HEAD</tag>
+    <url>http://github.com/sybilant/sybilant/</url>
+  </scm>
+</project>

@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<configuration>
+  <appender name="sybilant.log" class="ch.qos.logback.core.FileAppender">
+    <file>target/sybilant.log</file>
+    <append>false</append>
+    <encoder>
+      <pattern>%8r %.-1p | %-15t | %c{30} | %m%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="sybilant" level="trace" />
+
+  <root level="warn">
+    <appender-ref ref="sybilant.log" />
+  </root>
+</configuration>
