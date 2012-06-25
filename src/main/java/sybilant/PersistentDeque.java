@@ -29,9 +29,9 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
         return Color.RED;
       case 1:
         return Color.YELLOW;
-      case 4:
+      case YELLOW_LIMIT:
         return Color.YELLOW;
-      case 5:
+      case RED_LIMIT:
         return Color.RED;
       default:
         return Color.GREEN;
@@ -73,11 +73,11 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
           Si1 = Si1.inject(Pi1.last());
           Pi1 = Pi1.eject();
         }
-        if (Pi.count() >= 4) {
+        if (Pi.count() >= YELLOW_LIMIT) {
           Pi1 = Pi1.push(Pi.slice(Pi.count() - 2, Pi.count()));
           Pi = Pi.slice(0, Pi.count() - 2);
         }
-        if (Si.count() >= 4) {
+        if (Si.count() >= YELLOW_LIMIT) {
           Si1 = Si1.inject(Si.slice(0, 2));
           Si = Si.slice(2, Si.count());
         }
@@ -101,11 +101,11 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
           Pi1 = Pi1.inject(Si1.first());
           Si1 = Si1.pop();
         }
-        if (Pi.count() >= 4) {
+        if (Pi.count() >= YELLOW_LIMIT) {
           Pi1 = Pi1.push(Pi.slice(Pi.count() - 2, Pi.count()));
           Pi = Pi.slice(0, Pi.count() - 2);
         }
-        if (Si.count() >= 4) {
+        if (Si.count() >= YELLOW_LIMIT) {
           Pi1 = Pi1.inject(Si.slice(0, 2));
           Si = Si.slice(2, Si.count());
         }
@@ -355,8 +355,8 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
     private boolean invariant() {
       if (!isEmpty()) {
         assert this.prefix.count() > 0 || this.suffix.count() > 0;
-        assert this.prefix.count() < 6;
-        assert this.suffix.count() < 6;
+        assert this.prefix.count() <= RED_LIMIT;
+        assert this.suffix.count() <= RED_LIMIT;
         assert this.substack.isEmpty() || !this.child.isEmpty() : "if a node's substack is not empty, then its child must not be empty";
       }
       return true;
@@ -401,6 +401,8 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
     }
   }
 
+  static final int RED_LIMIT = 32;
+  static final int YELLOW_LIMIT = RED_LIMIT - 1;
   static final PersistentDeque<?> Empty = new PersistentDeque<>();
 
   @SafeVarargs
