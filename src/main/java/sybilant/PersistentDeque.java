@@ -38,31 +38,44 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
       }
     }
 
+    private static Color color(final boolean bottom, final Array<?> prefix,
+        final Array<?> suffix) {
+      assert !bottom || !prefix.isEmpty() || !suffix.isEmpty();
+      final Color prefixColor = arrayColor(prefix);
+      final Color suffixColor = arrayColor(suffix);
+      if (bottom && prefix.isEmpty() ^ suffix.isEmpty()) {
+        if (!prefix.isEmpty()) {
+          return prefixColor;
+        }
+        return suffixColor;
+      }
+      return prefixColor.compareTo(suffixColor) < 0 ? prefixColor : suffixColor;
+    }
+
+    private static boolean isNodeGreen(final boolean bottom,
+        final Array<?> prefix, final Array<?> suffix) {
+      return Color.GREEN.equals(color(bottom, prefix, suffix));
+    }
+
+    private static boolean isNodeRed(final boolean bottom,
+        final Array<?> prefix, final Array<?> suffix) {
+      return Color.RED.equals(color(bottom, prefix, suffix));
+    }
+
+    private static boolean isNodeYellow(final boolean bottom,
+        final Array<?> prefix, final Array<?> suffix) {
+      return Color.YELLOW.equals(color(bottom, prefix, suffix));
+    }
+
     @SuppressWarnings("unchecked")
-    private static <T> Node<T> regularize(final Node<T> n) {
-      Node<T> node = n;
-      if (node.isEmpty()
-          || node.isGreen()
-          || node.isYellow(true)
-          && (node.child.isEmpty() || node.child.isGreen() || node.child
-              .isYellow(node.substack.isEmpty())
-              && (node.substack.isEmpty() || node.substack.isGreen()))) {
-        return node;
-      }
-      assert node.isRed() || node.child.isRed() || node.substack.isRed();
-      if (!node.child.isEmpty() && node.child.isRed()) {
-        return new Node<>(node.prefix, regularize(node.child), node.substack,
-            node.suffix);
-      }
-      if (!node.substack.isEmpty() && node.substack.isRed()) {
-        return new Node<>(node.prefix, node.child, regularize(node.substack),
-            node.suffix);
-      }
-      Array<T> Pi = node.prefix;
-      Array<Array<T>> Pi1 = node.child.prefix;
-      Array<Array<T>> Si1 = node.child.suffix;
-      Array<T> Si = node.suffix;
-      assert !Pi1.isEmpty() && !Si1.isEmpty() || node.child.child.isEmpty() : "level i + 1 may not be red";
+    private static <T> Node<T> regularize(final Array<T> prefix,
+        final Node<Array<T>> child, final Node<?> substack,
+        final Array<T> suffix) {
+      Array<T> Pi = prefix;
+      Array<Array<T>> Pi1 = child.prefix;
+      Array<Array<T>> Si1 = child.suffix;
+      Array<T> Si = suffix;
+      assert !Pi1.isEmpty() && !Si1.isEmpty() || child.child.isEmpty() : "level i + 1 may not be red";
       if (Pi1.count() + Si1.count() >= 2) {
         // assert false : "two buffer case";
         if (Pi1.isEmpty()) {
@@ -82,18 +95,19 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
           Si = Si.slice(2, Si.count());
         }
         if (Pi.count() <= 1) {
-          Pi = Pi.inject(Pi1.first().first()).inject(Pi1.first().last());
+          final Object[] values = new Object[Pi.count() + 2];
+          System.arraycopy(Pi.values, 0, values, 0, Pi.count());
+          System.arraycopy(Pi1.first().values, 0, values, Pi.count(), 2);
+          Pi = new Array<>(values);
           Pi1 = Pi1.pop();
         }
         if (Si.count() <= 1) {
-          Si = Si.push(Si1.last().last()).push(Si1.last().first());
+          final Object[] values = new Object[Si.count() + 2];
+          System.arraycopy(Si1.last().values, 0, values, 0, 2);
+          System.arraycopy(Si.values, 0, values, 2, Si.count());
+          Si = new Array<>(values);
           Si1 = Si1.eject();
         }
-        Node<Array<T>> child = empty();
-        if (!Pi1.isEmpty() || !Si1.isEmpty()) {
-          child = new Node<>(Pi1, node.child.child, node.child.substack, Si1);
-        }
-        node = new Node<>(Pi, child, node.substack, Si);
       } else if (Pi1.count() + Si1.count() <= 1
           && (Pi.count() >= 2 || Si.count() >= 2)) {
         // assert false : "one buffer case";
@@ -110,63 +124,87 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
           Si = Si.slice(2, Si.count());
         }
         if (Pi.count() <= 1) {
-          Pi = Pi.inject(Pi1.first().first()).inject(Pi1.first().last());
+          final Object[] values = new Object[Pi.count() + 2];
+          System.arraycopy(Pi.values, 0, values, 0, Pi.count());
+          System.arraycopy(Pi1.first().values, 0, values, Pi.count(), 2);
+          Pi = new Array<>(values);
           Pi1 = Pi1.pop();
         }
         if (Si.count() <= 1) {
-          Si = Si.push(Pi1.last().last()).push(Pi1.last().first());
+          final Object[] values = new Object[Si.count() + 2];
+          System.arraycopy(Pi1.last().values, 0, values, 0, 2);
+          System.arraycopy(Si.values, 0, values, 2, Si.count());
+          Si = new Array<>(values);
           Pi1 = Pi1.eject();
         }
-        Node<Array<T>> child = empty();
-        if (!Pi1.isEmpty()) {
-          child = new Node<>(Pi1, Node.<Array<Array<T>>> empty(), empty(), Si1);
-        }
-        node = new Node<>(Pi, child, node.substack, Si);
       } else if (Pi1.count() + Si1.count() <= 1 && Pi.count() <= 1
           && Si.count() <= 1) {
         if (Pi1.count() == 1) {
-          Pi = Pi.inject(Pi1.first().first()).inject(Pi1.first().last());
+          final Object[] values = new Object[Pi.count() + 2];
+          System.arraycopy(Pi.values, 0, values, 0, Pi.count());
+          System.arraycopy(Pi1.first().values, 0, values, Pi.count(), 2);
+          Pi = new Array<>(values);
+          Pi1 = Pi1.pop();
         }
         if (Si1.count() == 1) {
-          Pi = Pi.inject(Si1.first().first()).inject(Si1.first().last());
+          final Object[] values = new Object[Pi.count() + 2];
+          System.arraycopy(Pi.values, 0, values, 0, Pi.count());
+          System.arraycopy(Si1.first().values, 0, values, Pi.count(), 2);
+          Pi = new Array<>(values);
+          Si1 = Si1.pop();
         }
         if (Si.count() == 1) {
           Pi = Pi.inject(Si.first());
+          Si = Si.pop();
         }
-        node = new Node<>(Pi, Node.<Array<T>> empty(), empty(),
-            Array.<T> create());
       } else {
         assert false : "null case";
       }
-      if (!node.child.isEmpty()) {
-        if (node.substack.isEmpty() && node.child.isYellow(true)) {
-          if (node.child.substack.isEmpty() && !node.child.child.isEmpty()
-              && !node.child.child.isYellow(true)) {
-            final Node<Array<T>> child = new Node<>(node.child.prefix,
-                Node.<Array<Array<T>>> empty(), empty(), node.child.suffix);
-            assert child.isYellow(node.substack.isEmpty());
-            node = new Node<>(node.prefix, child, node.child.child, node.suffix);
-          } else if (!node.child.substack.isEmpty()) {
-            final Node<Array<T>> child = new Node<>(node.child.prefix,
-                node.child.child, empty(), node.child.suffix);
-            assert child.isYellow(node.substack.isEmpty());
-            node = new Node<>(node.prefix, child, node.child.substack,
-                node.suffix);
-          }
-        } else if (!node.substack.isEmpty() && !node.child.isYellow(false)) {
-          assert node.child.substack.isEmpty();
-          final Node<Array<T>> child;
-          if (node.child.child.isEmpty()) {
-            child = new Node<>(node.child.prefix,
-                (Node<Array<Array<T>>>) node.substack, empty(),
-                node.child.suffix);
+      if (!Pi1.isEmpty() || !Si1.isEmpty()) {
+        final boolean childIsYellow = isNodeYellow(substack.isEmpty()
+            && child.child.isEmpty() && child.substack.isEmpty(), Pi1, Si1);
+        if (substack.isEmpty() && childIsYellow) {
+          if (child.substack.isEmpty() && !child.child.isEmpty()
+              && !child.isChildYellow(true)) {
+            final Node<Array<T>> newChild = new Node<>(Pi1,
+                Node.<Array<Array<T>>> empty(), empty(), Si1);
+            assert newChild.isYellow(substack.isEmpty());
+            final Node<T> node = new Node<>(Pi, newChild, child.child, Si);
+            assert node.isRegular();
+            return node;
+          } else if (!child.substack.isEmpty()) {
+            final Node<Array<T>> newChild = new Node<>(Pi1, child.child,
+                empty(), Si1);
+            assert newChild.isYellow(substack.isEmpty());
+            final Node<T> node = new Node<>(Pi, newChild, child.substack, Si);
+            assert node.isRegular();
+            return node;
           } else {
-            child = new Node<>(node.child.prefix, node.child.child,
-                node.substack, node.child.suffix);
+            final Node<T> node = new Node<>(Pi, new Node<>(Pi1, child.child,
+                child.substack, Si1), substack, Si);
+            assert node.isRegular();
+            return node;
           }
-          node = new Node<>(node.prefix, child, empty(), node.suffix);
+        } else if (!substack.isEmpty() && !childIsYellow) {
+          assert child.substack.isEmpty();
+          Node<Array<T>> newChild;
+          if (child.child.isEmpty()) {
+            newChild = new Node<>(Pi1, (Node<Array<Array<T>>>) substack,
+                empty(), Si1);
+          } else {
+            newChild = new Node<>(Pi1, child.child, substack, Si1);
+          }
+          final Node<T> node = new Node<>(Pi, newChild, empty(), Si);
+          assert node.isRegular();
+          return node;
+        } else {
+          final Node<T> node = new Node<>(Pi, new Node<>(Pi1, child.child,
+              child.substack, Si1), substack, Si);
+          assert node.isRegular();
+          return node;
         }
       }
+      final Node<T> node = new Node<>(Pi, Node.<Array<T>> empty(), empty(), Si);
       assert node.isRegular();
       return node;
     }
@@ -287,8 +325,8 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
       }
       assert isGreen()
           || isYellow(true)
-          && (this.child.isEmpty() || this.child.isGreen() || this.child
-              .isYellow(this.substack.isEmpty())
+          && (this.child.isEmpty() || this.child.isGreen() || this
+              .isChildYellow(true)
               && (this.substack.isEmpty() || this.substack.isGreen())) : "the topmost non-yellow node must be green";
       assert isSemiregular(true);
       return true;
@@ -299,16 +337,14 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
         return true;
       }
       assert this.substack.isEmpty() || !this.child.isEmpty()
-          && this.child.isYellow(false) : "if a node's substack is not empty, then its child must be yellow";
+          && this.isChildYellow(false) : "if a node's substack is not empty, then its child must be yellow";
       assert this.substack.isEmpty() || this.substack.isGreen()
           || this.substack.isRed() : "if a node's substack is not empty, then its substack must be red or green";
       assert !isRed() || this.child.isEmpty() || this.child.isGreen()
-          || this.child.isYellow(bottom && this.substack.isEmpty())
+          || this.isChildYellow(bottom)
           && (this.substack.isEmpty() || this.substack.isGreen()) : "if a node is red, then its child/substack must be empty or green";
-      assert this.child.isEmpty()
-          || !this.child.isYellow(bottom && this.substack.isEmpty())
-          || this.child.child.isEmpty()
-          || this.child.child.isYellow(bottom && this.child.substack.isEmpty()) : "if a node is yellow, then its child must be yellow";
+      assert this.child.isEmpty() || !this.isChildYellow(bottom)
+          || this.child.child.isEmpty() || this.child.isChildYellow(bottom) : "if a node is yellow, then its child must be yellow";
       assert this.child.isSemiregular(bottom && this.substack.isEmpty());
       assert this.substack.isSemiregular(true);
       return true;
@@ -338,20 +374,6 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
       return setPrefix(this.prefix.push(first));
     }
 
-    private Color color(final boolean bottom) {
-      assert !isEmpty();
-      final Color prefixColor = prefixColor();
-      final Color suffixColor = suffixColor();
-      if (bottom && this.child.isEmpty() && this.substack.isEmpty()
-          && this.prefix.isEmpty() ^ this.suffix.isEmpty()) {
-        if (!this.prefix.isEmpty()) {
-          return prefixColor;
-        }
-        return suffixColor;
-      }
-      return prefixColor.compareTo(suffixColor) < 0 ? prefixColor : suffixColor;
-    }
-
     private boolean invariant() {
       if (!isEmpty()) {
         assert this.prefix.count() > 0 || this.suffix.count() > 0;
@@ -362,46 +384,79 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
       return true;
     }
 
+    private boolean isChildYellow(final boolean bottom) {
+      return isNodeYellow(
+          bottom && this.substack.isEmpty() && this.child.child.isEmpty()
+              && this.child.substack.isEmpty(), this.child.prefix,
+          this.child.suffix);
+    }
+
     private boolean isGreen() {
-      return Color.GREEN.equals(color(true));
+      return isNodeGreen(this.child.isEmpty() && this.substack.isEmpty(),
+          this.prefix, this.suffix);
     }
 
     private boolean isRed() {
-      return Color.RED.equals(color(true));
+      return isNodeRed(this.child.isEmpty() && this.substack.isEmpty(),
+          this.prefix, this.suffix);
     }
 
     private boolean isYellow(final boolean bottom) {
-      return Color.YELLOW.equals(color(bottom));
+      return isNodeYellow(
+          bottom && this.child.isEmpty() && this.substack.isEmpty(),
+          this.prefix, this.suffix);
     }
 
-    private Color prefixColor() {
-      return arrayColor(this.prefix);
-    }
-
+    @SuppressWarnings("unchecked")
     private Node<T> setPrefix(final Array<T> prefix) {
       if (prefix.isEmpty() && this.child.isEmpty() && this.substack.isEmpty()
           && this.suffix.isEmpty()) {
         return empty();
       }
-      return regularize(new Node<>(prefix, this.child, this.substack,
-          this.suffix));
+      if (!this.child.isEmpty() && this.child.isRed()) {
+        assert this.substack.isEmpty() : "if a node's child is not yellow, then its substack must be empty";
+        return new Node<>(prefix, regularize(this.child.prefix,
+            this.child.child, this.child.substack, this.child.suffix),
+            this.substack, this.suffix);
+      }
+      if (!this.substack.isEmpty() && this.substack.isRed()) {
+        final Node<T> substack = (Node<T>) this.substack;
+        return new Node<>(prefix, this.child, regularize(substack.prefix,
+            substack.child, substack.substack, substack.suffix), this.suffix);
+      }
+      if (isNodeRed(this.child.isEmpty() && this.substack.isEmpty(), prefix,
+          this.suffix)) {
+        return regularize(prefix, this.child, this.substack, this.suffix);
+      }
+      return new Node<>(prefix, this.child, this.substack, this.suffix);
     }
 
+    @SuppressWarnings("unchecked")
     private Node<T> setSuffix(final Array<T> suffix) {
       if (this.prefix.isEmpty() && this.child.isEmpty()
           && this.substack.isEmpty() && suffix.isEmpty()) {
         return empty();
       }
-      return regularize(new Node<>(this.prefix, this.child, this.substack,
-          suffix));
-    }
-
-    private Color suffixColor() {
-      return arrayColor(this.suffix);
+      if (!this.child.isEmpty() && this.child.isRed()) {
+        assert this.substack.isEmpty() : "if a node's child is not yellow, then its substack must be empty";
+        return new Node<>(this.prefix, regularize(this.child.prefix,
+            this.child.child, this.child.substack, this.child.suffix),
+            this.substack, suffix);
+      }
+      if (!this.substack.isEmpty() && this.substack.isRed()) {
+        final Node<T> substack = (Node<T>) this.substack;
+        return new Node<>(this.prefix, this.child, regularize(substack.prefix,
+            substack.child, substack.substack, substack.suffix), suffix);
+      }
+      if (isNodeRed(this.child.isEmpty() && this.substack.isEmpty(),
+          this.prefix, suffix)) {
+        return regularize(this.prefix, this.child, this.substack, suffix);
+      }
+      return new Node<>(this.prefix, this.child, this.substack, suffix);
     }
   }
 
-  static final int RED_LIMIT = 32;
+  static final int RED_LIMIT = 31;
   static final int YELLOW_LIMIT = RED_LIMIT - 1;
   static final PersistentDeque<?> Empty = new PersistentDeque<>();
 
