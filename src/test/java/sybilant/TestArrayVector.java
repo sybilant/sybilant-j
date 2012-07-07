@@ -12,7 +12,7 @@ package sybilant;
 
 import org.junit.Test;
 
-public class TestArray extends VectorTestCase {
+public class TestArrayVector extends VectorTestCase {
   @Test
   public void testArrayDelete() {
     assertEquals(createArray(2, 3), createArray(1, 2, 3).delete(0));
@@ -41,8 +41,8 @@ public class TestArray extends VectorTestCase {
     assertTrue(createArray(1).delete(0).isEmpty());
   }
 
-  protected Array<Number> createArray(final Number... values) {
-    return Array.create(values);
+  protected ArrayVector<Number> createArray(final Number... values) {
+    return ArrayVector.create(values);
   }
 
   @Override

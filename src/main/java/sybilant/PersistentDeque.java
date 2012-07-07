@@ -23,7 +23,7 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
       return (Node<T>) Empty;
     }
 
-    private static Color arrayColor(final Array<?> array) {
+    private static Color arrayColor(final ArrayVector<?> array) {
       switch (array.count()) {
       case 0:
         return Color.RED;
@@ -38,8 +38,8 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
       }
     }
 
-    private static Color color(final boolean bottom, final Array<?> prefix,
-        final Array<?> suffix) {
+    private static Color color(final boolean bottom, final ArrayVector<?> prefix,
+        final ArrayVector<?> suffix) {
       assert !bottom || !prefix.isEmpty() || !suffix.isEmpty();
       final Color prefixColor = arrayColor(prefix);
       final Color suffixColor = arrayColor(suffix);
@@ -53,28 +53,28 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
     }
 
     private static boolean isNodeGreen(final boolean bottom,
-        final Array<?> prefix, final Array<?> suffix) {
+        final ArrayVector<?> prefix, final ArrayVector<?> suffix) {
       return Color.GREEN.equals(color(bottom, prefix, suffix));
     }
 
     private static boolean isNodeRed(final boolean bottom,
-        final Array<?> prefix, final Array<?> suffix) {
+        final ArrayVector<?> prefix, final ArrayVector<?> suffix) {
       return Color.RED.equals(color(bottom, prefix, suffix));
     }
 
     private static boolean isNodeYellow(final boolean bottom,
-        final Array<?> prefix, final Array<?> suffix) {
+        final ArrayVector<?> prefix, final ArrayVector<?> suffix) {
       return Color.YELLOW.equals(color(bottom, prefix, suffix));
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> Node<T> regularize(final Array<T> prefix,
-        final Node<Array<T>> child, final Node<?> substack,
-        final Array<T> suffix) {
-      Array<T> Pi = prefix;
-      Array<Array<T>> Pi1 = child.prefix;
-      Array<Array<T>> Si1 = child.suffix;
-      Array<T> Si = suffix;
+    private static <T> Node<T> regularize(final ArrayVector<T> prefix,
+        final Node<ArrayVector<T>> child, final Node<?> substack,
+        final ArrayVector<T> suffix) {
+      ArrayVector<T> Pi = prefix;
+      ArrayVector<ArrayVector<T>> Pi1 = child.prefix;
+      ArrayVector<ArrayVector<T>> Si1 = child.suffix;
+      ArrayVector<T> Si = suffix;
       assert !Pi1.isEmpty() && !Si1.isEmpty() || child.child.isEmpty() : "level i + 1 may not be red";
       if (Pi1.count() + Si1.count() >= 2) {
         // assert false : "two buffer case";
@@ -98,14 +98,14 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
           final Object[] values = new Object[Pi.count() + 2];
           System.arraycopy(Pi.values, 0, values, 0, Pi.count());
           System.arraycopy(Pi1.first().values, 0, values, Pi.count(), 2);
-          Pi = new Array<>(values);
+          Pi = new ArrayVector<>(values);
           Pi1 = Pi1.pop();
         }
         if (Si.count() <= 1) {
           final Object[] values = new Object[Si.count() + 2];
           System.arraycopy(Si1.last().values, 0, values, 0, 2);
           System.arraycopy(Si.values, 0, values, 2, Si.count());
-          Si = new Array<>(values);
+          Si = new ArrayVector<>(values);
           Si1 = Si1.eject();
         }
       } else if (Pi1.count() + Si1.count() <= 1
@@ -127,14 +127,14 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
           final Object[] values = new Object[Pi.count() + 2];
           System.arraycopy(Pi.values, 0, values, 0, Pi.count());
           System.arraycopy(Pi1.first().values, 0, values, Pi.count(), 2);
-          Pi = new Array<>(values);
+          Pi = new ArrayVector<>(values);
           Pi1 = Pi1.pop();
         }
         if (Si.count() <= 1) {
           final Object[] values = new Object[Si.count() + 2];
           System.arraycopy(Pi1.last().values, 0, values, 0, 2);
           System.arraycopy(Si.values, 0, values, 2, Si.count());
-          Si = new Array<>(values);
+          Si = new ArrayVector<>(values);
           Pi1 = Pi1.eject();
         }
       } else if (Pi1.count() + Si1.count() <= 1 && Pi.count() <= 1
@@ -143,14 +143,14 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
           final Object[] values = new Object[Pi.count() + 2];
           System.arraycopy(Pi.values, 0, values, 0, Pi.count());
           System.arraycopy(Pi1.first().values, 0, values, Pi.count(), 2);
-          Pi = new Array<>(values);
+          Pi = new ArrayVector<>(values);
           Pi1 = Pi1.pop();
         }
         if (Si1.count() == 1) {
           final Object[] values = new Object[Pi.count() + 2];
           System.arraycopy(Pi.values, 0, values, 0, Pi.count());
           System.arraycopy(Si1.first().values, 0, values, Pi.count(), 2);
-          Pi = new Array<>(values);
+          Pi = new ArrayVector<>(values);
           Si1 = Si1.pop();
         }
         if (Si.count() == 1) {
@@ -166,14 +166,14 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
         if (substack.isEmpty() && childIsYellow) {
           if (child.substack.isEmpty() && !child.child.isEmpty()
               && !child.isChildYellow(true)) {
-            final Node<Array<T>> newChild = new Node<>(Pi1,
-                Node.<Array<Array<T>>> empty(), empty(), Si1);
+            final Node<ArrayVector<T>> newChild = new Node<>(Pi1,
+                Node.<ArrayVector<ArrayVector<T>>> empty(), empty(), Si1);
             assert newChild.isYellow(substack.isEmpty());
             final Node<T> node = new Node<>(Pi, newChild, child.child, Si);
             assert node.isRegular();
             return node;
           } else if (!child.substack.isEmpty()) {
-            final Node<Array<T>> newChild = new Node<>(Pi1, child.child,
+            final Node<ArrayVector<T>> newChild = new Node<>(Pi1, child.child,
                 empty(), Si1);
             assert newChild.isYellow(substack.isEmpty());
             final Node<T> node = new Node<>(Pi, newChild, child.substack, Si);
@@ -187,9 +187,9 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
           }
         } else if (!substack.isEmpty() && !childIsYellow) {
           assert child.substack.isEmpty();
-          Node<Array<T>> newChild;
+          Node<ArrayVector<T>> newChild;
           if (child.child.isEmpty()) {
-            newChild = new Node<>(Pi1, (Node<Array<Array<T>>>) substack,
+            newChild = new Node<>(Pi1, (Node<ArrayVector<ArrayVector<T>>>) substack,
                 empty(), Si1);
           } else {
             newChild = new Node<>(Pi1, child.child, substack, Si1);
@@ -204,26 +204,26 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
           return node;
         }
       }
-      final Node<T> node = new Node<>(Pi, Node.<Array<T>> empty(), empty(), Si);
+      final Node<T> node = new Node<>(Pi, Node.<ArrayVector<T>> empty(), empty(), Si);
       assert node.isRegular();
       return node;
     }
 
-    final Array<T> prefix;
-    final Node<Array<T>> child;
+    final ArrayVector<T> prefix;
+    final Node<ArrayVector<T>> child;
     final Node<?> substack;
-    final Array<T> suffix;
+    final ArrayVector<T> suffix;
 
     @SuppressWarnings("unchecked")
     Node() {
-      this.prefix = Array.create();
-      this.child = (Node<Array<T>>) this;
+      this.prefix = ArrayVector.create();
+      this.child = (Node<ArrayVector<T>>) this;
       this.substack = this;
-      this.suffix = Array.create();
+      this.suffix = ArrayVector.create();
     }
 
-    Node(final Array<T> prefix, final Node<Array<T>> yellows,
-        final Node<?> substack, final Array<T> suffix) {
+    Node(final ArrayVector<T> prefix, final Node<ArrayVector<T>> yellows,
+        final Node<?> substack, final ArrayVector<T> suffix) {
       this.prefix = prefix;
       this.child = yellows;
       this.substack = substack;
@@ -260,7 +260,7 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
       } else if (!more.isEmpty()) {
         final int childCount = 2 * more.count();
         if (i < childCount) {
-          final T t = ((Node<Array<T>>) more).at(i / 2).at(i % 2);
+          final T t = ((Node<ArrayVector<T>>) more).at(i / 2).at(i % 2);
           if (t != null) {
             return t;
           }
@@ -408,7 +408,7 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private Node<T> setPrefix(final Array<T> prefix) {
+    private Node<T> setPrefix(final ArrayVector<T> prefix) {
       if (prefix.isEmpty() && this.child.isEmpty() && this.substack.isEmpty()
           && this.suffix.isEmpty()) {
         return empty();
@@ -432,7 +432,7 @@ public class PersistentDeque<T> implements Countable, Deque<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private Node<T> setSuffix(final Array<T> suffix) {
+    private Node<T> setSuffix(final ArrayVector<T> suffix) {
       if (this.prefix.isEmpty() && this.child.isEmpty()
           && this.substack.isEmpty() && suffix.isEmpty()) {
         return empty();

@@ -12,7 +12,7 @@ package sybilant;
 
 import java.util.NoSuchElementException;
 
-public class Array<T> implements Vector<T>, Deque<T> {
+public class ArrayVector<T> implements Vector<T>, Deque<T> {
   class Iterator implements java.util.Iterator<T> {
     int index = 0;
 
@@ -35,25 +35,25 @@ public class Array<T> implements Vector<T>, Deque<T> {
     }
   }
 
-  static final Array<?> Empty = new Array<>(new Object[0]);
+  static final ArrayVector<?> Empty = new ArrayVector<>(new Object[0]);
 
   @SafeVarargs
   @SuppressWarnings("unchecked")
-  public static <T> Array<T> create(final T... values) {
+  public static <T> ArrayVector<T> create(final T... values) {
     if (values == null || values.length == 0) {
-      return (Array<T>) Empty;
+      return (ArrayVector<T>) Empty;
     }
     for (final T t : values) {
       if (t == null) {
         throw new NullPointerException();
       }
     }
-    return new Array<>(values);
+    return new ArrayVector<>(values);
   }
 
   final Object[] values;
 
-  Array(final Object[] values) {
+  ArrayVector(final Object[] values) {
     this.values = values;
     assert invariant();
   }
@@ -69,7 +69,7 @@ public class Array<T> implements Vector<T>, Deque<T> {
     return this.values.length;
   }
 
-  public Array<T> delete(final int index) {
+  public ArrayVector<T> delete(final int index) {
     if (index == 0 && count() == 1) {
       return empty();
     }
@@ -77,11 +77,11 @@ public class Array<T> implements Vector<T>, Deque<T> {
     System.arraycopy(this.values, 0, newValues, 0, index);
     System.arraycopy(this.values, index + 1, newValues, index, count() - index
         - 1);
-    return new Array<>(newValues);
+    return new ArrayVector<>(newValues);
   }
 
   @Override
-  public Array<T> eject() {
+  public ArrayVector<T> eject() {
     if (isEmpty()) {
       return this;
     }
@@ -92,8 +92,8 @@ public class Array<T> implements Vector<T>, Deque<T> {
   }
 
   @SuppressWarnings("unchecked")
-  public Array<T> empty() {
-    return (Array<T>) Array.Empty;
+  public ArrayVector<T> empty() {
+    return (ArrayVector<T>) ArrayVector.Empty;
   }
 
   @Override
@@ -101,10 +101,10 @@ public class Array<T> implements Vector<T>, Deque<T> {
     if (!(obj instanceof Seq<?>)) {
       return false;
     }
-    if (!(obj instanceof Array<?>)) {
+    if (!(obj instanceof ArrayVector<?>)) {
       return Seqs.equals(this, (Seq<?>) obj);
     }
-    final Array<?> that = (Array<?>) obj;
+    final ArrayVector<?> that = (ArrayVector<?>) obj;
     if (count() != that.count()) {
       return false;
     }
@@ -134,11 +134,11 @@ public class Array<T> implements Vector<T>, Deque<T> {
   }
 
   @Override
-  public Array<T> inject(final T last) {
+  public ArrayVector<T> inject(final T last) {
     return insert(count(), last);
   }
 
-  public Array<T> insert(final int index, final T value) {
+  public ArrayVector<T> insert(final int index, final T value) {
     if (value == null) {
       throw new NullPointerException();
     }
@@ -146,7 +146,7 @@ public class Array<T> implements Vector<T>, Deque<T> {
     System.arraycopy(this.values, 0, newValues, 0, index);
     newValues[index] = value;
     System.arraycopy(this.values, index, newValues, index + 1, count() - index);
-    return new Array<>(newValues);
+    return new ArrayVector<>(newValues);
   }
 
   @Override
@@ -168,7 +168,7 @@ public class Array<T> implements Vector<T>, Deque<T> {
   }
 
   @Override
-  public Array<T> pop() {
+  public ArrayVector<T> pop() {
     if (isEmpty()) {
       return this;
     }
@@ -179,27 +179,27 @@ public class Array<T> implements Vector<T>, Deque<T> {
   }
 
   @Override
-  public Array<T> push(final T first) {
+  public ArrayVector<T> push(final T first) {
     return insert(0, first);
   }
 
   @Override
-  public Array<T> seq() {
+  public ArrayVector<T> seq() {
     return this;
   }
 
   @Override
-  public Array<T> set(final int index, final T value) {
+  public ArrayVector<T> set(final int index, final T value) {
     if (value == null) {
       throw new NullPointerException();
     }
     final Object[] newValues = this.values.clone();
     newValues[index] = value;
-    return new Array<>(newValues);
+    return new ArrayVector<>(newValues);
   }
 
   @Override
-  public Array<T> slice(final int start, final int end) {
+  public ArrayVector<T> slice(final int start, final int end) {
     if (start >= count()) {
       throw new ArrayIndexOutOfBoundsException("start: " + start);
     }
@@ -214,7 +214,7 @@ public class Array<T> implements Vector<T>, Deque<T> {
     }
     final Object[] newValues = new Object[end - start];
     System.arraycopy(this.values, start, newValues, 0, end - start);
-    return new Array<>(newValues);
+    return new ArrayVector<>(newValues);
   }
 
   @Override

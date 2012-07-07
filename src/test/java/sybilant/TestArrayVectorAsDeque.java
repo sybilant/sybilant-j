@@ -10,7 +10,7 @@
  */
 package sybilant;
 
-public class TestArrayAsDeque extends DequeTestCase {
+public class TestArrayVectorAsDeque extends DequeTestCase {
   @Override
   public void testSeqToString() {
     assertEquals("[]", createArray().toString());
@@ -18,8 +18,8 @@ public class TestArrayAsDeque extends DequeTestCase {
     assertEquals("[1 2]", createArray(1, 2).toString());
   }
 
-  protected Array<Number> createArray(final Number... values) {
-    return Array.create(values);
+  protected ArrayVector<Number> createArray(final Number... values) {
+    return ArrayVector.create(values);
   }
 
   @Override

@@ -103,7 +103,7 @@ public abstract class SeqTestCase extends ObjectTestCase {
 
   @Override
   protected Object[] createEqualObjects() {
-    return new Object[] { Array.create(1, 2), PersistentDeque.create(1, 2) };
+    return new Object[] { ArrayVector.create(1, 2), PersistentDeque.create(1, 2) };
   }
 
   @Override
